@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Cumpleaños - Oficina</title>
+    <style>
+        :root {
+            --primary: #2b579a;
+            --primary-light: #eff4fc;
+            --accent: #e81123;
+            --success: #107c41;
+            --text: #333333;
+            --bg: #f3f2f1;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 950px;
+        }
+
+        header {
+            text-align: center;
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0; font-size: 24px; }
+        
+        /* CARTEL DE ALERTA AGRANDADO Y MEJORADO */
+        .alert-box {
+            display: none;
+            background: #fff0f1;
+            border: 3px solid var(--accent);
+            color: #a80000;
+            padding: 25px 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-weight: 800;
+            font-size: 28px;
+            text-align: center;
+            box-shadow: 0 6px 12px rgba(232, 17, 35, 0.15);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* Barra de herramientas superior */
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .toggle-edit-btn {
+            background: #ffffff;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .toggle-edit-btn:hover {
+            background: var(--primary-light);
+        }
+
+        .toggle-edit-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Formulario para agregar/editar cumple */
+        .form-box {
+            display: none;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 1px solid #dddddd;
+        }
+
+        .form-box h3 {
+            margin-top: 0;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .form-group input, .form-group button {
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .form-group input[type="text"] {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .form-group button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .form-group button:hover {
+            background: #1e3d6b;
+        }
+
+        .form-group .cancel-btn {
+            background: #666;
+        }
+        .form-group .cancel-btn:hover {
+            background: #444;
+        }
+
+        .section-title {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 5px;
+            margin-top: 10px;
+            font-size: 20px;
+        }
+
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .month-card {
+            background: var(--card-bg);
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 15px;
+            border-top: 4px solid var(--primary);
+        }
+
+        .month-card.current-month {
+            border-top-color: var(--success);
+            background: var(--primary-light);
+        }
+
+        .month-name {
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .current-month .month-name {
+            color: var(--success);
+        }
+
+        .cumple-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .cumple-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #f3f2f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cumple-item:last-child {
+            border-bottom: none;
+        }
+
+        .cumple-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .name { font-weight: 500; }
+        .date { color: #666; font-size: 13px; margin-top: 2px; }
+
+        .actions {
+            display: none;
+            gap: 5px;
+        }
+
+        .modo-edicion-activo .actions {
+            display: flex;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 5px;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #e1dfdd;
+        }
+
+        .today-birthday {
+            background: #dff6dd !important;
+            border-radius: 4px;
+            padding: 4px 6px;
+        }
+        
+        .today-birthday .name {
+            color: var(--success);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-container">
+    <header>
+        <h1>🎉 Recordatorio de Cumpleaños - Oficina 🎂</h1>
+    </header>
+
+    <div id="hoy-alerta" class="alert-box"></div>
+
+    <div class="toolbar">
+        <button id="toggle-edit-btn" class="toggle-edit-btn" onclick="alternarModoEdicion()">
+            ⚙️ Modo Edición: Desactivado
+        </button>
+    </div>
+
+    <div class="form-box" id="form-box">
+        <h3 id="form-titulo">➕ Agregar nuevo cumpleaños</h3>
+        <div class="form-group">
+            <input type="text" id="nuevo-nombre" placeholder="Nombre del compañero" required>
+            <input type="date" id="nueva-fecha" required>
+            <button id="submit-btn" onclick="guardarCumpleanios()">Agregar nuevo cumple</button>
+            <button id="cancel-btn" class="cancel-btn" onclick="cancelarEdicion()" style="display:none;">Cancelar</button>
+        </div>
+    </div>
+
+    <h2 class="section-title">Calendario Anual</h2>
+    <div class="month-grid" id="calendario-grid"></div>
+</div>
+
+<script>
+    // CONTRASEÑA DE SEGURIDAD (Cambiá 'admin123' por la que vos quieras)
+    const CLAVE_SECRETA = "admin123";
+
+    const listaOriginal = [
+        { id: "1", nombre: "Patricia", dia: 9, mes: 1 },
+        { id: "2", nombre: "Mikaela", dia: 15, mes: 1 },
+        { id: "3", nombre: "Pablo", dia: 18, mes: 1 },
+        { id: "4", nombre: "Graciela", dia: 3, mes: 2 },
+        { id: "5", nombre: "Paula", dia: 10, mes: 2 },
+        { id: "6", nombre: "Mariana *", dia: 7, mes: 3 },
+        { id: "7", nombre: "Mario *", dia: 10, mes: 3 },
+        { id: "8", nombre: "Estefanía *", dia: 11, mes: 3 },
+        { id: "9", nombre: "Victoria Z.", dia: 14, mes: 3 },
+        { id: "10", nombre: "María Elena", dia: 27, mes: 3 },
+        { id: "11", nombre: "Emmanuel *", dia: 12, mes: 4 },
+        { id: "12", nombre: "Flavia", dia: 13, mes: 4 },
+        { id: "13", nombre: "Fernando *", dia: 2, mes: 5 },
+        { id: "14", nombre: "Diego", dia: 9, mes: 5 },
+        { id: "15", nombre: "Victoria L.", dia: 24, mes: 5 },
+        { id: "16", nombre: "Test de Prueba (Hoy) 🥳", dia: 12, mes: 6 },
+        { id: "17", nombre: "Soledad", dia: 8, mes: 6 },
+        { id: "18", nombre: "Leticia *", dia: 8, mes: 6 },
+        { id: "19", nombre: "Daniel", dia: 14, mes: 6 },
+        { id: "20", nombre: "Alejandro", dia: 9, mes: 7 },
+        { id: "21", nombre: "Juan Carlos", dia: 17, mes: 8 },
+        { id: "22", nombre: "Marcelo", dia: 21, mes: 9 },
+        { id: "23", nombre: "Roberto *", dia: 23, mes: 9 },
+        { id: "24", nombre: "Luz", dia: 1, mes: 10 },
+        { id: "25", nombre: "Lorena", dia: 15, mes: 10 },
+        { id: "26", nombre: "Marisel", dia: 30, mes: 10 },
+        { id: "27", nombre: "Alen", dia: 4, mes: 11 },
+        { id: "28", nombre: "Romina", dia: 5, mes: 11 },
+        { id: "29", nombre: "Marina", dia: 9, mes: 11 },
+        { id: "30", nombre: "Abigail", dia: 13, mes: 11 },
+        { id: "31", nombre: "Sergio", dia: 18, mes: 11 },
+        { id: "32", nombre: "Laura", dia: 23, mes: 11 },
+        { id: "33", nombre: "Antonio (Tony)", dia: 29, mes: 12 },
+        { id: "34", nombre: "Juan G.", dia: 30, mes: 12 },
+        { id: "35", nombre: "Verónica", dia: 30, mes: 12 }
+    ];
+
+    let cumpleanios = JSON.parse(localStorage.getItem('oficina_cumples')) || listaOriginal;
+    let idEnEdicion = null;
+    let modoEdicionActivo = false;
+
+    const mesesNombres = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    function guardarEnStorage() {
+        localStorage.setItem('oficina_cumples', JSON.stringify(cumpleanios));
+    }
+
+    function alternarModoEdicion() {
+        modoEdicionActivo = !modoEdicionActivo;
+        const contenedor = document.getElementById('main-container');
+        const botonPrincipal = document.getElementById('toggle-edit-btn');
+        const formularioBox = document.getElementById('form-box');
+
+        if (modoEdicionActivo) {
+            contenedor.classList.add('modo-edicion-activo');
+            botonPrincipal.classList.add('active');
+            botonPrincipal.innerText = '⚙️ Modo Edición: Activo';
+            formularioBox.style.display = 'block';
+        } else {
+            contenedor.classList.remove('modo-edicion-activo');
+            botonPrincipal.classList.remove('active');
+            botonPrincipal.innerText = '⚙️ Modo Edición: Desactivado';
+            formularioBox.style.display = 'none';
+            cancelarEdicion();
+        }
+    }
+
+    function renderizarCalendario() {
+        const hoy = new Date();
+        const diaActual = hoy.getDate();
+        const mesActual = hoy.getMonth() + 1;
+
+        const cumpleañerosHoy = cumpleanios.filter(c => parseInt(c.dia) === diaActual && parseInt(c.mes) === mesActual);
+        const alertaBox = document.getElementById('hoy-alerta');
+        
+        if (cumpleañerosHoy.length > 0) {
+            const nombres = cumpleañerosHoy.map(c => c.nombre).join(' y ');
+            alertaBox.innerHTML = `🎈 ¡Hoy es el cumpleaños de: ${nombres}! ¡A saludar! 🥳🎂`;
+            alertaBox.style.display = 'block';
+        } else {
+            alertaBox.style.display = 'none';
+        }
+
+        const grid = document.getElementById('calendario-grid');
+        grid.innerHTML = '';
+        
+        mesesNombres.forEach((mesNombre, index) => {
+            const numMes = index + 1;
+            const cumplesDelMes = cumpleanios.filter(c => parseInt(c.mes) === numMes);
+            
+            cumplesDelMes.sort((a, b) => parseInt(a.dia) - parseInt(b.dia));
+
+            const card = document.createElement('div');
+            card.className = `month-card ${numMes === mesActual ? 'current-month' : ''}`;
+            
+            let htmlContenido = `<div class="month-name">${mesNombre}</div>`;
+            
+            if (cumplesDelMes.length === 0) {
+                htmlContenido += `<p style="color:#999; font-size:14px; margin:0;">No hay cumpleaños</p>`;
+            } else {
+                htmlContenido += `<ul class="cumple-list">`;
+                cumplesDelMes.forEach(c => {
+                    const esHoy = (parseInt(c.dia) === diaActual && parseInt(c.mes) === mesActual);
+                    htmlContenido += `
+                        <li class="cumple-item ${esHoy ? 'today-birthday' : ''}">
+                            <div class="cumple-info">
+                                <span class="name">${c.nombre}</span>
+                                <span class="date">${c.dia} de ${mesNombre.toLowerCase()}</span>
+                            </div>
+                            <div class="actions">
+                                <button class="action-btn" onclick="prepararEdicion('${c.id}')" title="Editar">✏️</button>
+                                <button class="action-btn" onclick="eliminarCumpleanios('${c.id}')" title="Eliminar" style="color:var(--accent);">❌</button>
+                            </div>
+                        </li>`;
+                });
+                htmlContenido += `</ul>`;
+            }
+            
+            card.innerHTML = htmlContenido;
+            grid.appendChild(card);
+        });
+    }
+
+    function guardarCumpleanios() {
+        const nombreInput = document.getElementById('nuevo-nombre');
+        const fechaInput = document.getElementById('nueva-fecha');
+
+        if (!nombreInput.value || !fechaInput.value) {
+            alert('Por favor, completa el nombre y la fecha.');
+            return;
+        }
+
+        // VALIDACIÓN CON CLAVE
+        const claveUsuario = prompt("Ingresá la clave de administrador para autorizar los cambios:");
+        if (claveUsuario !== CLAVE_SECRETA) {
+            alert("Clave incorrecta. No se realizaron modificaciones.");
+            return;
+        }
+
+        const partesFecha = fechaInput.value.split('-');
+        const mesSeleccionado = parseInt(partesFecha[1], 10);
+        const diaSeleccionado = parseInt(partesFecha[2], 10);
+
+        if (idEnEdicion) {
+            const index = cumpleanios.findIndex(c => c.id === idEnEdicion);
+            if (index !== -1) {
+                cumpleanios[index].nombre = nombreInput.value;
+                cumpleanios[index].dia = diaSeleccionado;
+                cumpleanios[index].mes = mesSeleccionado;
+            }
+            cancelarEdicion();
+        } else {
+            cumpleanios.push({
+                id: Date.now().toString(),
+                nombre: nombreInput.value,
+                dia: diaSeleccionado,
+                mes: mesSeleccionado
+            });
+            nombreInput.value = '';
+            fechaInput.value = '';
+        }
+
+        guardarEnStorage();
+        renderizarCalendario();
+        alert("¡Cambios guardados con éxito!");
+    }
+
+    function prepararEdicion(id) {
+        const cumple = cumpleanios.find(c => c.id === id);
+        if (!cumple) return;
+
+        idEnEdicion = id;
+        document.getElementById('form-titulo').innerText = `✏️ Editar cumpleaños de ${cumple.nombre}`;
+        document.getElementById('nuevo-nombre').value = cumple.nombre;
+        
+        const anioActual = new Date().getFullYear();
+        const mm = cumple.mes < 10 ? '0' + cumple.mes : cumple.mes;
+        const dd = cumple.dia < 10 ? '0' + cumple.dia : cumple.dia;
+        document.getElementById('nueva-fecha').value = `${anioActual}-${mm}-${dd}`;
+
+        document.getElementById('submit-btn').innerText = 'Guardar cambios';
+        document.getElementById('cancel-btn').style.display = 'inline-block';
+        
+        document.querySelector('.form-box').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelarEdicion() {
+        idEnEdicion = null;
+        document.getElementById('form-titulo').innerText = '➕ Agregar nuevo cumpleaños';
+        document.getElementById('nuevo-nombre').value = '';
+        document.getElementById('nueva-fecha').value = '';
+        document.getElementById('submit-btn').innerText = 'Agregar nuevo cumple';
+        document.getElementById('cancel-btn').style.display = 'none';
+    }
+
+    function eliminarCumpleanios(id) {
+        const cumple = cumpleanios.find(c => c.id === id);
+        
+        // VALIDACIÓN CON CLAVE PARA ELIMINAR
+        const claveUsuario = prompt(`¿Querés borrar a ${cumple.nombre}? Ingresá la clave de administrador:`);
+        if (claveUsuario !== CLAVE_SECRETA) {
+            alert("Clave incorrecta. No se borró el registro.");
+            return;
+        }
+
+        cumpleanios = cumpleanios.filter(c => c.id !== id);
+        if (idEnEdicion === id) cancelarEdicion();
+        guardarEnStorage();
+        renderizarCalendario();
+        alert("Registro eliminado.");
+    }
+
+    window.onload = renderizarCalendario;
+</script>
+
+</body>
+</html>
